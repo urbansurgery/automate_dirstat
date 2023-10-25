@@ -1,5 +1,4 @@
 import pytest
-import sys
 from specklepy.objects.base import Base
 from specklepy.objects.geometry import Mesh
 

@@ -1,19 +1,7 @@
-from typing import Any
-
 import pytest
 from specklepy.objects.base import Base
-from specklepy.transports.server import ServerTransport
 
-from Utilities.reporting import Report
-from main import (
-    filter_displayable_bases,
-    create_health_objects
-)
 from Objects.objects import HealthObject
-from specklepy.api.client import SpeckleClient
-
-from specklepy.api import operations
-
 from Utilities.utilities import Utilities
 
 
@@ -99,7 +87,7 @@ def speckle_server_url(request) -> str:
 
 
 def test_filter_displayable_bases(mock_base):
-    displayable_bases = filter_displayable_bases(mock_base)
+    displayable_bases = Utilities.filter_displayable_bases(mock_base)
     assert len(displayable_bases) == 2  # Only child_1 and child_2 should be considered displayable
 
 

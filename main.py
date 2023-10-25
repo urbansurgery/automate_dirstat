@@ -3,9 +3,6 @@
 The purpose is to demonstrate how one can use the automation_context module
 to process and analyze data in a Speckle project.
 """
-import os
-import tempfile
-from datetime import datetime
 from pydantic import Field
 from speckle_automate import (
     AutomateBase,
@@ -13,6 +10,7 @@ from speckle_automate import (
     execute_automate_function,
 )
 
+from Objects.objects import colorise_densities
 from Utilities.reporting import Report
 from Utilities.utilities import Utilities
 
@@ -77,13 +75,13 @@ def automate_function(
     # Attach visual cues and notifications based on object densities.
     Utilities.attach_visual_markers(
         automate_context, health_objects, function_inputs.density_level)
-    Utilities.colorise_densities(automate_context, health_objects)
+
+    colorise_densities(automate_context, health_objects)
 
     # Wrap up the analysis by marking the run either successful or failed.
     pass_rate_percentage = function_inputs.max_percentage_high_density_objects
     threshold = function_inputs.density_level
-    data, all_densities, all_areas = Utilities.density_summary(
-        health_objects, threshold)
+    data, all_densities, all_areas = Utilities.density_summary(health_objects)
 
     commit_details = {
         'stream_id': automate_context.automation_run_data.project_id,
