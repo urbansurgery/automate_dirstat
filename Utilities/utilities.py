@@ -1,11 +1,16 @@
 from typing import List, TypeVar, Iterable, Optional, Union
-import re
+from matplotlib import pyplot as plt
+from speckle_automate import AutomationContext
 from specklepy.objects.base import Base
 import sys
 
 import statistics
 
 from typing import TYPE_CHECKING, Dict
+
+from specklepy.objects.other import RenderMaterial
+
+from flatten import flatten_base
 
 if TYPE_CHECKING:
     from Objects.objects import HealthObject
@@ -17,6 +22,18 @@ class Utilities:
 
     @staticmethod
     def is_displayable_object(speckle_object: Base) -> bool:
+        """
+        Determines if a given Speckle object is displayable.
+
+        This function checks if the speckle_object has a display value
+        and returns True if it does, otherwise it returns False.
+
+        Args:
+            speckle_object (Base): The Speckle object to check.
+
+        Returns:
+            bool: True if the object has a display value, False otherwise.
+        """
         return Utilities.try_get_display_value(speckle_object) is not None
 
     @staticmethod
@@ -43,6 +60,7 @@ class Utilities:
     @staticmethod
     def get_byte_size(speckle_object: Base) -> int:
         """Calculate the total byte size of the display values of a Speckle object.
+            Keeps drilling down until it gets to vertices, or it returns 0 if it can't find any.
 
         Args:
             speckle_object (Base): The Speckle object for which to compute the byte size.
@@ -67,26 +85,46 @@ class Utilities:
         return sys.getsizeof(display_values['vertices'])
 
     @staticmethod
-    def density_summary(health_objects: Dict[str, "HealthObject"], threshold) -> tuple[
-        List[List[Union[str, float, int]]], list[float], list[int]]:
-        filtered_health_objects = [ho for ho in health_objects.values() if
-                                   any(area >= 0 for area in ho.areas.values())]
+    def density_summary(
+            health_objects: Dict[str, 'HealthObject'], threshold: float
+    ) -> tuple[List[List[Union[str, float, int]]], List[float], List[int]]:
+        """
+        Generate a density summary for the provided health objects.
 
-        # Extract all densities
+        This method filters health objects based on their areas, computes
+        various statistical metrics on their densities, and prepares a summary
+        table of these metrics.
+
+        Args:
+            health_objects (Dict[str, 'HealthObject']): A dictionary of health
+                objects to compute the summary for.
+            threshold (float): The density threshold for filtering.
+
+        Returns:
+            tuple: A tuple containing the summary table, all densities, and
+                all areas.
+        """
+        # Filter objects with any area value greater than or equal to 0
+        filtered_health_objects = [
+            ho for ho in health_objects.values()
+            if any(area >= 0 for area in ho.areas.values())
+        ]
+
+        # Extract relevant data
         all_densities = [ho.aggregate_density for ho in filtered_health_objects]
-        all_areas = [sum(ho.bounding_volumes.values()) for ho in filtered_health_objects]  # Adjust this line if needed
-        # all_sizes = [sum(ho.sizes.values()) for ho in filtered_health_objects]  # Adjust this line if needed
+        all_areas = [sum(ho.bounding_volumes.values()) for ho in filtered_health_objects]
 
-        # Calculate the statistics
+        # Compute statistical metrics
         count = len(filtered_health_objects)
         avg_density = round(sum(all_densities) / count if count else 0, 3)
         median_density = round(statistics.median(all_densities), 3)
         max_density = round(max(all_densities), 3)
         min_density = round(min(all_densities), 3)
         std_dev_density = round(statistics.stdev(all_densities) if count > 1 else 0, 3)
-        q1_density = round(statistics.quantiles(all_densities, n=4)[0], 3)  # First quartile
-        q3_density = round(statistics.quantiles(all_densities, n=4)[2], 3)  # Third quartile
+        q1_density = round(statistics.quantiles(all_densities, n=4)[0], 3)
+        q3_density = round(statistics.quantiles(all_densities, n=4)[2], 3)
 
+        # Prepare the summary table
         data = [
             ["Metric", "Value"],
             ["Count", count],
@@ -102,13 +140,121 @@ class Utilities:
         return data, all_densities, all_areas
 
     @staticmethod
-    def parse_percentage(s: str) -> float:
-        # Extract percentage using regex
-        match = re.search(r'(\d+(\.\d+)?)%', s)
+    def colorise_densities(automate_context: AutomationContext,
+                           health_objects: Dict[str, HealthObject]) -> None:
+        """
+        Create a color gradient based on density values for visualization.
 
-        # If found, convert to float
-        if match:
-            percentage = float(match.group(1))
-            return percentage / 100  # Convert to fraction
-        else:
-            raise ValueError("No percentage value found in the string")
+        Args:
+            automate_context (AutomationContext): Context for the automate function.
+            health_objects (Dict[str, HealthObject]): Dictionary mapping object IDs
+                                                      to their HealthObject.
+
+        For each HealthObject, this function calculates a color based on its
+        density. This color then is used to update the object's render material.
+        """
+
+        # Extracting densities for each HealthObject
+        densities = {ho.id: ho.aggregate_density for ho in health_objects.values()}
+
+        if len(densities.items()) == 0:
+            return
+
+        # Determine the range of densities for normalization
+        min_density = min(densities.values())
+        max_density = max(densities.values())
+
+        # Get the colormap and normalize the densities
+        cmap = plt.get_cmap('viridis')
+        norm = plt.Normalize(min_density, max_density)
+
+        # Iterate through each HealthObject and update its render material
+        for obj_id, density in densities.items():
+            rgba_color = cmap(norm(density))
+
+            # Convert RGBA to Hex
+            hex_color = "#{:02x}{:02x}{:02x}".format(
+                int(rgba_color[0] * 255),
+                int(rgba_color[1] * 255),
+                int(rgba_color[2] * 255)
+            )
+
+            # Convert hex color to ARBG integer format
+            arbg_color = int(hex_color[1:], 16) - (1 << 32)
+
+            # Attach color information for visualization
+            automate_context.attach_info_to_objects(
+                category="Density Visualization",
+                metadata={"density": density},
+                object_ids=obj_id,
+                visual_overrides={"color": hex_color}
+            )
+
+            # Update the render material of the HealthObject
+            health_objects[obj_id].render_material = RenderMaterial(diffuse=arbg_color)
+
+    @staticmethod
+    def attach_visual_markers(automate_context: AutomationContext,
+                              health_objects: Dict[str, HealthObject],
+                              density_level: float) -> None:
+        """
+        Attach visual markers and notifications based on density.
+
+        Args:
+            automate_context: Context for the automate function.
+            health_objects: Dictionary of health objects.
+            density_level: Threshold for high density.
+        """
+        for ho in health_objects.values():
+            if any(value > density_level for value in ho.densities.values()):
+                count_exceeding = sum(1 for value in ho.densities.values() if value > density_level)
+                automate_context.attach_error_to_objects(
+                    category="Density Check",
+                    object_ids=ho.id,
+                    message=(
+                        f"{count_exceeding} mesh{'es' if count_exceeding != 1 else ''} "
+                        f"of this object {'have' if count_exceeding != 1 else 'has'} a density, "
+                        f"that exceeds the threshold of {density_level}."
+                    ),
+                    visual_overrides={"color": "#ff0000"}
+                )
+            else:
+                automate_context.attach_info_to_objects(
+                    category="Density Check",
+                    object_ids=ho.id,
+                    message=f"This object has an acceptable density of {ho.aggregate_density}.",
+                    visual_overrides={"color": "#00ff00"},
+                )
+
+    @staticmethod
+    def create_health_objects(bases: List[Base]) -> Dict[str, HealthObject]:
+        """
+        Converts bases into health objects for further analysis.
+
+        Args:
+            bases: List of base objects.
+
+        Returns:
+            Dictionary mapping IDs to corresponding health objects.
+        """
+        health_objects = {b.id: HealthObject(id=b.id) for b in bases}
+        for b in bases:
+            health_objects[b.id].convert_from_base(b)
+
+        return health_objects
+
+    @staticmethod
+    def filter_displayable_bases(root_object: Base) -> List[Base]:
+        """
+        Filters out objects that are not displayable or don't have valid IDs.
+
+        Args:
+            root_object: The root object to start the filtering from.
+
+        Returns:
+            List of displayable bases with valid IDs.
+        """
+        return [
+            b for b in flatten_base(root_object)
+            if Utilities.is_displayable_object(b) and b.id
+        ]
