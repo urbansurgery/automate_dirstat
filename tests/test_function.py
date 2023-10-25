@@ -1,15 +1,11 @@
 """Run integration tests with a speckle server."""
+
 import secrets
 import string
 
 import pytest
 from gql import gql
-from speckle_automate import (
-    AutomationRunData,
-    AutomationContext,
-    AutomationStatus,
-    run_function, AutomationContext,
-)
+from speckle_automate import AutomationRunData, AutomationStatus, run_function, AutomationContext
 from specklepy.api import operations
 from specklepy.api.client import SpeckleClient
 from specklepy.objects.base import Base
@@ -139,25 +135,19 @@ def automation_run_data(
         automation_run_id=automation_run_id,
         function_id=function_id,
         function_revision=function_revision,
-        function_name="",
-        function_release=function_revision
-        function_name="",
-        function_release= function_revision
+        function_name=""
     )
 
 
 def test_function_run(automation_run_data: AutomationRunData, speckle_token: str, sample_bases):
     """Run an integration test for the automate function."""
 
-
     context = AutomationContext.initialize(automation_run_data, speckle_token)
 
     automate_sdk = run_function(
         context,
-        context,
         automate_function,
         FunctionInputs(density_level=1000, max_percentage_high_density_objects=0.1),
-
     )
 
     assert automate_sdk.run_status == AutomationStatus.FAILED
