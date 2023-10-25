@@ -194,3 +194,16 @@ class Report:
         }
 
         return data
+
+    @staticmethod
+    def write_pdf_to_temp(report):
+        temp_folder = "automate_tiles_" + str(datetime.now().timestamp())[:6]
+        temp_folder_path = os.path.join(os.path.abspath(tempfile.gettempdir()), temp_folder)
+        folder_exists = os.path.exists(temp_folder_path)
+        if not folder_exists:
+            os.makedirs(temp_folder_path)
+        file_name = os.path.join(temp_folder_path, 'report.pdf')
+        with open(file_name, 'wb') as f:
+            report.seek(0)  # Ensure the buffer's position is at the beginning
+            f.write(report.read())
+        return file_name
