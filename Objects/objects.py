@@ -3,6 +3,9 @@ from dataclasses import dataclass, field
 
 from matplotlib import pyplot as plt
 from speckle_automate import AutomationContext
+from specklepy.api.client import SpeckleClient
+from specklepy.core.api.models import Branch
+from specklepy.logging.exceptions import GraphQLException
 from specklepy.objects.base import Base
 from specklepy.objects.geometry import Mesh
 from typing import Optional, TypeVar, List, Dict, Union
@@ -308,3 +311,48 @@ def density_summary(
     ]
 
     return data, all_densities, all_areas
+
+
+def transport_recolorized_commit(automate_context: AutomationContext, health_objects: Dict[str, HealthObject],
+                                 commit_details: Dict[str, str], root_object: Base) -> str:
+    # traverse the speckle commit object and find the display meshes that have entries in the health objects map
+    # return the commit id of the new commit
+    # create a new commit on a specific branch - we'll use "dirstat" for now
+
+    # Traverse the root object to find display meshes
+    for obj in root_object.traverse():
+        if isinstance(obj, Mesh):  # Assuming Mesh is the type of displayable objects
+            if obj.id in health_objects:
+                # Modify the mesh based on its health data
+                # For example, change its color or add a visual marker
+                pass  # Implement the modification logic here
+
+    # Create a new commit with the modified root object
+    model = try_get_model_or_create(client=automate_context.speckle_client,
+                                    project_id=automate_context.automation_run_data.project_id, model_name="dirstat")
+
+    if not model:
+        raise Exception("Failed to create a new model (branch) on the server.")
+
+    model_id = model.id
+
+    new_version_id = automate_context.create_new_version_in_project(root_object=root_object, model_id=model_id)
+
+    return new_version_id
+
+
+def try_get_model_or_create(client: SpeckleClient, project_id: str, model_name: str) -> Union[Branch, None]:
+    try:
+        # Attempt to retrieve the model (branch) by its name
+        model = client.branch.get(stream_id=project_id, name=model_name)
+
+        # If the model doesn't exist, create it
+        if not model:
+            client.branch.create(stream_id=project_id, name=model_name)
+            model = client.branch.get(stream_id=project_id, name=model_name)
+
+        return model
+
+    except GraphQLException:
+        # Handle exception raised while fetching or creating the model
+        return None

@@ -106,6 +106,8 @@ def automate_function(
     file_name = Report.write_pdf_to_temp(report)
     automate_context.store_file_result(file_name)
 
+    transport_recolorized_commit(automate_context, health_objects, commit_details, version_root_object)
+
     if summary_data['values']['result'] == 'Fail':
         automate_context.mark_run_failed(
             f"Too many high-density objects. Allowed: "
