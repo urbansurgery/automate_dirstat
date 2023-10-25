@@ -311,3 +311,11 @@ pyrightconfig.json
 .ionide
 
 # End of https://www.toptal.com/developers/gitignore/api/visualstudiocode,python,pycharm
+.python-version
+.idea/automate_dirstat.iml
+.idea/misc.xml
+.idea/modules.xml
+.idea/codeStyles/Project.xml
+.idea/codeStyles/codeStyleConfig.xml
+.idea/vcs.xml
+.idea/inspectionProfiles/profiles_settings.xml

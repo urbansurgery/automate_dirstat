@@ -1,5 +1,4 @@
 """Run integration tests with a speckle server."""
-import os
 import secrets
 import string
 
@@ -8,11 +7,12 @@ from gql import gql
 from speckle_automate import (
     AutomationRunData,
     AutomationStatus,
-    run_function,
+    run_function, AutomationContext,
 )
 from specklepy.api import operations
 from specklepy.api.client import SpeckleClient
 from specklepy.objects.base import Base
+from specklepy.objects.geometry import Mesh
 from specklepy.transports.server import ServerTransport
 
 from main import FunctionInputs, automate_function
@@ -25,12 +25,12 @@ def crypto_random_string(length: int) -> str:
 
 
 def register_new_automation(
-    project_id: str,
-    model_id: str,
-    speckle_client: SpeckleClient,
-    automation_id: str,
-    automation_name: str,
-    automation_revision_id: str,
+        project_id: str,
+        model_id: str,
+        speckle_client: SpeckleClient,
+        automation_id: str,
+        automation_name: str,
+        automation_revision_id: str,
 ):
     """Register a new automation in the speckle server."""
     query = gql(
@@ -67,19 +67,14 @@ def register_new_automation(
 
 
 @pytest.fixture()
-def speckle_token() -> str:
-    """Provide a speckle token for the test suite."""
-    env_var = "SPECKLE_TOKEN"
-    token = os.getenv(env_var)
-    if not token:
-        raise ValueError(f"Cannot run tests without a {env_var} environment variable")
-    return token
+def speckle_token(request) -> str:
+    return request.config.SPECKLE_TOKEN
 
 
 @pytest.fixture()
-def speckle_server_url() -> str:
+def speckle_server_url(request) -> str:
     """Provide a speckle server url for the test suite, default to localhost."""
-    return os.getenv("SPECKLE_SERVER_URL", "http://127.0.0.1:3000")
+    return request.config.SPECKLE_SERVER_URL
 
 
 @pytest.fixture()
@@ -102,7 +97,7 @@ def test_object() -> Base:
 
 @pytest.fixture()
 def automation_run_data(
-    test_object: Base, test_client: SpeckleClient, speckle_server_url: str
+        test_object: Base, test_client: SpeckleClient, speckle_server_url: str
 ) -> AutomationRunData:
     """Set up an automation context for testing."""
     project_id = test_client.stream.create("Automate function e2e test")
@@ -143,16 +138,30 @@ def automation_run_data(
         automation_run_id=automation_run_id,
         function_id=function_id,
         function_revision=function_revision,
+        function_name="",
+        function_release=function_revision
     )
 
 
-def test_function_run(automation_run_data: AutomationRunData, speckle_token: str):
+def test_function_run(automation_run_data: AutomationRunData, speckle_token: str, sample_bases):
     """Run an integration test for the automate function."""
+
+    context = AutomationContext.initialize(automation_run_data, speckle_token)
+
     automate_sdk = run_function(
+        context,
         automate_function,
-        automation_run_data,
-        speckle_token,
-        FunctionInputs(forbidden_speckle_type="Base"),
+        FunctionInputs(density_level=1000, max_percentage_high_density_objects=0.1),
     )
 
     assert automate_sdk.run_status == AutomationStatus.FAILED
+
+
+@pytest.fixture
+def sample_bases():
+    base_with_display_value = Base()
+    base_with_display_value.displayValue = [Mesh()]
+
+    base_without_display_value = Base()
+
+    return base_with_display_value, base_without_display_value
