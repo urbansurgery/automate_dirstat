@@ -1,73 +1,58 @@
-# Speckle Automate function template - Python
+# Speckle Density Analysis Tool
 
+This tool is designed for the AEC (Architecture, Engineering, and Construction) industry to analyze and report on the
+density of mesh objects in Speckle projects. The goal is to help identify potentially problematic objects that might
+impact model performance, based on a presumed relationship between heavy mesh objects and poor model health.
 
-This is a template repository for a Speckle Automate functions written in python
-using the [specklepy](https://pypi.org/project/specklepy/) SDK to interact with Speckle data.
+## Introduction
 
-This template contains the full scaffolding required to publish a function to the automate environment.
-Also has some sane defaults for a development environment setups.
+Heavy mesh objects can often be a sign of poor model health and can detrimentally affect performance. This tool provides
+a comprehensive analysis of Speckle projects to identify and report on the density of these objects. The report
+generated can then be used to take corrective measures, ensuring optimal model health.
 
-## Getting started
+**Note**: The absolute value of the density is unitless and is used for comparative purposes. It's essential to
+interpret the results in the context of the specific project.
 
-1. Use this template repository to create a new repository in your own / organization's profile.
+## Getting Started
 
-Register the function 
+1. **Setup**: Clone this repository to your local machine or development environment.
+2. **Dependencies**: Install the required dependencies using `poetry` with the command `$ poetry add pandas`.
+3. **Configuration**: Edit the `launch.json` as required for your setup.
+4. **Local Development**: For local development and testing, refer to the "Local dev environment" section.
 
-### Add new dependencies
+## How to Use
 
-To add new python package dependencies to the project, use:
-`$ poetry add pandas`
+1. **Initialization**: Create a new Speckle Automation.
+2. **Configuration**:
+    - Select your Speckle Project and Speckle Model.
+    - Choose the Speckle Function named "Density Analysis Tool".
+    - Set the desired density threshold and pass rate percentage.
+3. **Execution**: Click on "Create Automation". The tool will analyze the project and provide a comprehensive report.
 
-### Change launch variables
+## Developing Your Own Tool
 
-describe how the launch.json should be edited
+If you're looking to create a custom function based on this template:
 
-### Github Codespaces
-
-create new repo from template, and use the create new code
-
-
-### Local dev environment
-
-
-
-
-# Archive
-
-This is a simple example of how to use the Speckle Automate Python package to automate the creation of a Speckle stream.
-
-
-## Using this Speckle Function
-
-1. [Create](https://automate.speckle.dev/) a new Speckle Automation.
-1. Select your Speckle Project and Speckle Model.
-1. Select the existing Speckle Function named [`Random comment on IFC beam`](https://automate.speckle.dev/functions/e110be8fad).
-1. Enter a phrase to use in the comment.
-1. Click `Create Automation`.
-
-## Getting Started with creating your own Speckle Function
-
-1. [Fork](https://docs.github.com/en/get-started/quickstart/fork-a-repo) this repository.
-1. [Clone](https://docs.github.com/en/get-started/quickstart/fork-a-repo#cloning-your-forked-repository) your forked repository to your development environment, or use [GitHub CodeSpaces](https://github.com/features/codespaces).
-1. [Register](https://automate.speckle.dev/) your Function with [Speckle Automate](https://automate.speckle.dev/).
-1. After completing the registration of the Function you will be shown a Function Publish Token and a Function ID. You will need these later.
-1. Save your Function Publish Token as a [GitHub Action Secret](https://docs.github.com/en/actions/security-guides/encrypted-secrets#creating-encrypted-secrets-for-a-repository) named `SPECKLE_AUTOMATE_FUNCTION_PUBLISH_TOKEN`.
-1. Save your Function ID as a [GitHub Action Secret](https://docs.github.com/en/actions/security-guides/encrypted-secrets#creating-encrypted-secrets-for-a-repository) named `SPECKLE_AUTOMATE_FUNCTION_ID`.
-1. Make changes to your Function in `main.py`. See below for the Developer Requirements, and instructions on how to test.
-1. Every commit to `main` branch will create a new version of your Speckle Function.
+1. **Clone**: Fork this repository and clone it to your development environment.
+2. **Register**: Register your function with Speckle Automate to obtain a Function Publish Token and a Function ID.
+3. **Configure**: Save your Token and ID as GitHub Action Secrets, named `SPECKLE_AUTOMATE_FUNCTION_PUBLISH_TOKEN`
+   and `SPECKLE_AUTOMATE_FUNCTION_ID` respectively.
+4. **Development**: Modify `main.py` as per your requirements. Remember to test your changes.
+5. **Deployment**: Committing to the main branch will create a new version of your Speckle Function.
 
 ## Developer Requirements
 
-1. Install the following:
-    - [Python 3](https://www.python.org/downloads/)
-    - [Poetry](https://python-poetry.org/docs/#installing-with-the-official-installer)
-1. Run `poetry shell && poetry install` to install the required Python packages.
+- Python 3
+- Poetry
+
+After installation, run `poetry shell && poetry install` to install the necessary Python packages.
 
 ## Building and Testing
 
-The code can be tested locally by running `poetry run pytest`.
-The code should also be packaged into the format required by Speckle Automate, a Docker Container Image, and that should also be tested.
+Test the code locally using the command `poetry run pytest`. Ensure that the code is packaged into a Docker Container
+Image format required by Speckle Automate and test the container as well.
 
 ## Resources
 
-- [Learn](https://speckle.guide/dev/python.html) more about SpecklePy, and interacting with Speckle from Python.
+To learn more about interacting with Speckle from Python, refer to the
+official [SpecklePy documentation](<link_to_docs>).
