@@ -1,10 +1,11 @@
+import statistics
 from dataclasses import dataclass, field
 
 from matplotlib import pyplot as plt
 from speckle_automate import AutomationContext
 from specklepy.objects.base import Base
 from specklepy.objects.geometry import Mesh
-from typing import Optional, TypeVar, List, Dict
+from typing import Optional, TypeVar, List, Dict, Union
 
 from specklepy.objects.other import RenderMaterial
 from specklepy.objects.primitive import Interval
@@ -203,3 +204,107 @@ def colorise_densities(automate_context: AutomationContext,
 
         # Update the render material of the HealthObject
         health_objects[obj_id].render_material = RenderMaterial(diffuse=arbg_color)
+
+
+def attach_visual_markers(automate_context: AutomationContext,
+                          health_objects: Dict[str, HealthObject],
+                          density_level: float) -> None:
+    """
+    Attach visual markers and notifications based on density.
+
+    Args:
+        automate_context: Context for the automate function.
+        health_objects: Dictionary of health objects.
+        density_level: Threshold for high density.
+    """
+    for ho in health_objects.values():
+        if any(value > density_level for value in ho.densities.values()):
+            count_exceeding = sum(1 for value in ho.densities.values() if value > density_level)
+            automate_context.attach_error_to_objects(
+                category="Density Check",
+                object_ids=ho.id,
+                message=(
+                    f"{count_exceeding} mesh{'es' if count_exceeding != 1 else ''} "
+                    f"of this object {'have' if count_exceeding != 1 else 'has'} a density, "
+                    f"that exceeds the threshold of {density_level}."
+                ),
+                visual_overrides={"color": "#ff0000"}
+            )
+        else:
+            automate_context.attach_info_to_objects(
+                category="Density Check",
+                object_ids=ho.id,
+                message=f"This object has an acceptable density of {ho.aggregate_density}.",
+                visual_overrides={"color": "#00ff00"},
+            )
+
+
+def create_health_objects(bases: List[Base]) -> Dict[str, HealthObject]:
+    """
+    Converts bases into health objects for further analysis.
+
+    Args:
+        bases: List of base objects.
+
+    Returns:
+        Dictionary mapping IDs to corresponding health objects.
+    """
+    health_objects = {b.id: HealthObject(id=b.id) for b in bases}
+    for b in bases:
+        health_objects[b.id].convert_from_base(b)
+
+    return health_objects
+
+
+def density_summary(
+        health_objects: Dict[str, 'HealthObject']) -> tuple[
+    List[List[Union[str, float, int]]], List[float], List[int]]:
+    """
+    Generate a density summary for the provided health objects.
+
+    This method filters health objects based on their areas, computes
+    various statistical metrics on their densities, and prepares a summary
+    table of these metrics.
+
+    Args:
+        health_objects (Dict[str, 'HealthObject']): A dictionary of health
+            objects to compute the summary for.
+
+    Returns:
+        tuple: A tuple containing the summary table, all densities, and
+            all areas.
+    """
+    # Filter objects with any area value greater than or equal to 0
+    filtered_health_objects = [
+        ho for ho in health_objects.values()
+        if any(area >= 0 for area in ho.areas.values())
+    ]
+
+    # Extract relevant data
+    all_densities = [ho.aggregate_density for ho in filtered_health_objects]
+    all_areas = [sum(ho.bounding_volumes.values()) for ho in filtered_health_objects]
+
+    # Compute statistical metrics
+    count = len(filtered_health_objects)
+    avg_density = round(sum(all_densities) / count if count else 0, 3)
+    median_density = round(statistics.median(all_densities), 3)
+    max_density = round(max(all_densities), 3)
+    min_density = round(min(all_densities), 3)
+    std_dev_density = round(statistics.stdev(all_densities) if count > 1 else 0, 3)
+    q1_density = round(statistics.quantiles(all_densities, n=4)[0], 3)
+    q3_density = round(statistics.quantiles(all_densities, n=4)[2], 3)
+
+    # Prepare the summary table
+    data = [
+        ["Metric", "Value"],
+        ["Count", count],
+        ["Average Density", avg_density],
+        ["Median Density", median_density],
+        ["Max Density", max_density],
+        ["Min Density", min_density],
+        ["Standard Deviation", std_dev_density],
+        ["First Quartile", q1_density],
+        ["Third Quartile", q3_density]
+    ]
+
+    return data, all_densities, all_areas

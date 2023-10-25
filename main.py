@@ -10,7 +10,7 @@ from speckle_automate import (
     execute_automate_function,
 )
 
-from Objects.objects import colorise_densities
+from Objects.objects import colorise_densities, create_health_objects, attach_visual_markers, density_summary
 from Utilities.reporting import Report
 from Utilities.utilities import Utilities
 
@@ -70,10 +70,10 @@ def automate_function(
         return
 
     # Transform filtered objects to health objects for density analysis.
-    health_objects = Utilities.create_health_objects(displayable_bases)
+    health_objects = create_health_objects(displayable_bases)
 
     # Attach visual cues and notifications based on object densities.
-    Utilities.attach_visual_markers(
+    attach_visual_markers(
         automate_context, health_objects, function_inputs.density_level)
 
     colorise_densities(automate_context, health_objects)
@@ -81,7 +81,7 @@ def automate_function(
     # Wrap up the analysis by marking the run either successful or failed.
     pass_rate_percentage = function_inputs.max_percentage_high_density_objects
     threshold = function_inputs.density_level
-    data, all_densities, all_areas = Utilities.density_summary(health_objects)
+    data, all_densities, all_areas = density_summary(health_objects)
 
     commit_details = {
         'stream_id': automate_context.automation_run_data.project_id,
