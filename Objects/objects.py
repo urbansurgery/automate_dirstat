@@ -62,7 +62,7 @@ class HealthObject:
         If the area is zero, density defaults to zero.
         """
         return {
-            key: (self.sizes[key] / self.areas[key]) if self.areas[key] != 0 else 0
+            key: (self.sizes.get(key, 1) / self.areas.get(key, 1)) if self.areas.get(key, 0) != 0 else 0
             for key in self.sizes
         }
 
@@ -262,9 +262,7 @@ def colorise_densities(
             int(rgba_color[0] * 255), int(rgba_color[1] * 255), int(rgba_color[2] * 255)
         )
 
-        gradient_values[object_id] = {
-            "gradientValue": density
-        }
+        gradient_values[object_id] = {"gradientValue": density}
         all_object_ids.append(object_id)
         all_colors[object_id] = hex_color
 
@@ -275,10 +273,7 @@ def colorise_densities(
     # Attach color information for visualization for all objects in a single call
     automate_context.attach_info_to_objects(
         category="Density Visualization",
-        metadata={
-            "gradient": True,
-            "gradientValues": gradient_values
-        },
+        metadata={"gradient": True, "gradientValues": gradient_values},
         message="Density visualization",
         object_ids=all_object_ids,
     )
