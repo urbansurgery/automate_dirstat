@@ -62,7 +62,9 @@ class HealthObject:
         If the area is zero, density defaults to zero.
         """
         return {
-            key: (self.sizes.get(key, 1) / self.areas.get(key, 1)) if self.areas.get(key, 0) != 0 else 0
+            key: (self.sizes.get(key, 1) / self.areas.get(key, 1))
+            if self.areas.get(key, 0) != 0
+            else 0
             for key in self.sizes
         }
 
@@ -113,10 +115,11 @@ class HealthObject:
             float: The computed volume.
         """
         for index, dv in enumerate(display_value):
-            if hasattr(dv, "bbox") and dv.bbox:
-                self.bounding_volumes[dv.id] = dv.bbox.volume
-                self.areas[dv.id] = dv.bbox.xSize.length * dv.bbox.ySize.length
-            elif isinstance(dv, Mesh):
+            # if hasattr(dv, "bbox") and dv.bbox:
+            #     self.bounding_volumes[dv.id] = dv.bbox.volume
+            #     self.areas[dv.id] = dv.bbox.xSize.length * dv.bbox.ySize.length
+            # elif isinstance(dv, Mesh):
+            if isinstance(dv, Mesh):
                 x_interval = self.interval_from_coordinates_by_offset(dv.vertices, 0)
                 y_interval = self.interval_from_coordinates_by_offset(dv.vertices, 1)
                 z_interval = self.interval_from_coordinates_by_offset(dv.vertices, 2)
