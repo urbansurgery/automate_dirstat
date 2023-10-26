@@ -4,11 +4,10 @@ import sys
 
 from flatten import flatten_base
 
-T = TypeVar('T', bound=Base)
+T = TypeVar("T", bound=Base)
 
 
 class Utilities:
-
     @staticmethod
     def is_displayable_object(speckle_object: Base) -> bool:
         """
@@ -36,14 +35,17 @@ class Utilities:
             Optional[List[T]]: A list containing the display values. If no display value is found,
                                returns None.
         """
-        raw_display_value = getattr(speckle_object, 'displayValue', None) or getattr(speckle_object, '@displayValue',
-                                                                                     None)
+        raw_display_value = getattr(speckle_object, "displayValue", None) or getattr(
+            speckle_object, "@displayValue", None
+        )
 
         if raw_display_value is None:
             return None
 
         if isinstance(raw_display_value, Iterable):
-            display_values = list(filter(lambda x: isinstance(x, Base), raw_display_value))
+            display_values = list(
+                filter(lambda x: isinstance(x, Base), raw_display_value)
+            )
             return display_values if display_values else None
 
     @staticmethod
@@ -66,12 +68,14 @@ class Utilities:
             display_values = speckle_object
 
         if isinstance(display_values, Iterable):
-            return sum([sys.getsizeof(display_value) for display_value in display_values])
+            return sum(
+                [sys.getsizeof(display_value) for display_value in display_values]
+            )
 
-        if not hasattr(display_values, 'vertices'):
+        if not hasattr(display_values, "vertices"):
             return 0
 
-        return sys.getsizeof(display_values['vertices'])
+        return sys.getsizeof(display_values["vertices"])
 
     @staticmethod
     def filter_displayable_bases(root_object: Base) -> List[Base]:
@@ -85,6 +89,7 @@ class Utilities:
             List of displayable bases with valid IDs.
         """
         return [
-            b for b in flatten_base(root_object)
+            b
+            for b in flatten_base(root_object)
             if Utilities.is_displayable_object(b) and b.id
         ]

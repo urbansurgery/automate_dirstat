@@ -15,7 +15,7 @@ def flatten_base(base: Base, parent_type: str = None) -> Iterable[Base]:
         Base: A flattened base object.
     """
     if isinstance(base, Base):
-        base['parent_type'] = parent_type
+        base["parent_type"] = parent_type
 
     if hasattr(base, "elements") and base.elements:
         try:

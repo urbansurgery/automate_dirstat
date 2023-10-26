@@ -94,10 +94,8 @@ class HealthObject:
         display_value = Utilities.try_get_display_value(base_object)
 
         if display_value:
-            self.compute_bounding_volume_from_display_values(display_value)
-
-        if display_value:
             self.display_values = display_value
+            self.compute_bounding_volume_from_display_values(display_value)
             self.compute_byte_size_from_display_values(display_value)
 
     def compute_bounding_volume_from_display_values(
@@ -117,6 +115,7 @@ class HealthObject:
         for index, dv in enumerate(display_value):
             if hasattr(dv, "bbox") and dv.bbox:
                 self.bounding_volumes[dv.id] = dv.bbox.volume
+                self.areas[dv.id] = dv.bbox.xSize.length * dv.bbox.ySize.length
             elif isinstance(dv, Mesh):
                 x_interval = self.interval_from_coordinates_by_offset(dv.vertices, 0)
                 y_interval = self.interval_from_coordinates_by_offset(dv.vertices, 1)
