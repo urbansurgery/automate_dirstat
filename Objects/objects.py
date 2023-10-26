@@ -101,7 +101,7 @@ class HealthObject:
             self.compute_byte_size_from_display_values(display_value)
 
     def compute_bounding_volume_from_display_values(
-        self, display_value: List[T]
+            self, display_value: List[T]
     ) -> None:
         """Compute volume from a mesh representation.
 
@@ -123,13 +123,13 @@ class HealthObject:
                 z_interval = self.interval_from_coordinates_by_offset(dv.vertices, 2)
 
                 self.bounding_volumes[dv.id] = (
-                    x_interval.length() * y_interval.length() * z_interval.length()
+                        x_interval.length() * y_interval.length() * z_interval.length()
                 )
                 self.bounding_volumes[dv.id] /= 1000000000  # Convert to m^3
 
                 self.areas[dv.id] = (
-                    x_interval.length() * y_interval.length()
-                ) / 1000000
+                                            x_interval.length() * y_interval.length()
+                                    ) / 1000000
 
                 if z_interval.length() == 0:
                     self.dimension = "2D"
@@ -153,7 +153,7 @@ class HealthObject:
 
     @staticmethod
     def interval_from_coordinates_by_offset(
-        vertices: List[float], offset: int = 0
+            vertices: List[float], offset: int = 0
     ) -> Interval:
         """Compute interval from coordinates by offset.
 
@@ -170,7 +170,7 @@ class HealthObject:
 
 
 def colorise_densities(
-    automate_context: AutomationContext, health_objects: Dict[str, HealthObject]
+        automate_context: AutomationContext, health_objects: Dict[str, HealthObject]
 ) -> None:
     """
     Create a color gradient based on density values for visualization.
@@ -224,9 +224,9 @@ def colorise_densities(
 
 
 def attach_visual_markers(
-    automate_context: AutomationContext,
-    health_objects: Dict[str, HealthObject],
-    density_level: float,
+        automate_context: AutomationContext,
+        health_objects: Dict[str, HealthObject],
+        density_level: float,
 ) -> None:
     """
     Attach visual markers and notifications based on density.
@@ -236,28 +236,52 @@ def attach_visual_markers(
         health_objects: Dictionary of health objects.
         density_level: Threshold for high density.
     """
+    # for ho in health_objects.values():
+    #     if any(value > density_level for value in ho.densities.values()):
+    #         count_exceeding = sum(
+    #             1 for value in ho.densities.values() if value > density_level
+    #         )
+    #         automate_context.attach_error_to_objects(
+    #             category="Density Check",
+    #             object_ids=ho.id,
+    #             message=(
+    #                 f"{count_exceeding} mesh{'es' if count_exceeding != 1 else ''} "
+    #                 f"of this object {'have' if count_exceeding != 1 else 'has'} a density, "
+    #                 f"that exceeds the threshold of {density_level}."
+    #             ),
+    #             visual_overrides={"color": "#ff0000"},
+    #         )
+    #     else:
+    #         automate_context.attach_info_to_objects(
+    #             category="Density Check",
+    #             object_ids=ho.id,
+    #             message=f"This object has an acceptable density of {ho.aggregate_density}.",
+    #             visual_overrides={"color": "#00ff00"},
+    #         )
+    failing_ids = []
+    non_failing_ids = []
+
     for ho in health_objects.values():
         if any(value > density_level for value in ho.densities.values()):
-            count_exceeding = sum(
-                1 for value in ho.densities.values() if value > density_level
-            )
-            automate_context.attach_error_to_objects(
-                category="Density Check",
-                object_ids=ho.id,
-                message=(
-                    f"{count_exceeding} mesh{'es' if count_exceeding != 1 else ''} "
-                    f"of this object {'have' if count_exceeding != 1 else 'has'} a density, "
-                    f"that exceeds the threshold of {density_level}."
-                ),
-                visual_overrides={"color": "#ff0000"},
-            )
+            failing_ids.append(ho.id)
         else:
-            automate_context.attach_info_to_objects(
-                category="Density Check",
-                object_ids=ho.id,
-                message=f"This object has an acceptable density of {ho.aggregate_density}.",
-                visual_overrides={"color": "#00ff00"},
-            )
+            non_failing_ids.append(ho.id)
+
+    if failing_ids:
+        automate_context.attach_error_to_objects(
+            category="Density Check",
+            object_ids=failing_ids,
+            message=f"This object has a density that exceeds the set threshold ({density_level}).",
+            visual_overrides={"color": "#ff0000"},
+        )
+
+    if non_failing_ids:
+        automate_context.attach_info_to_objects(
+            category="Density Check",
+            object_ids=non_failing_ids,
+            message=f"This object has a density below the set threshold. ({density_level}).",
+            visual_overrides={"color": "#00ff00"},
+        )
 
 
 def create_health_objects(bases: List[Base]) -> Dict[str, HealthObject]:
@@ -278,7 +302,7 @@ def create_health_objects(bases: List[Base]) -> Dict[str, HealthObject]:
 
 
 def density_summary(
-    health_objects: Dict[str, "HealthObject"]
+        health_objects: Dict[str, "HealthObject"]
 ) -> tuple[List[List[Union[str, float, int]]], List[float], List[int]]:
     """
     Generate a density summary for the provided health objects.
