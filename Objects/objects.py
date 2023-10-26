@@ -169,6 +169,58 @@ class HealthObject:
         return axis_interval
 
 
+# def colorise_densities(
+#         automate_context: AutomationContext, health_objects: Dict[str, HealthObject]
+# ) -> None:
+#     """
+#     Create a color gradient based on density values for visualization.
+#
+#     Args:
+#         automate_context (AutomationContext): Context for the automate function.
+#         health_objects (Dict[str, HealthObject]): Dictionary mapping object IDs
+#                                                   to their HealthObject.
+#
+#     For each HealthObject, this function calculates a color based on its
+#     density. This color then is used to update the object's render material.
+#     """
+#
+#     # Extracting densities for each HealthObject
+#     densities = {ho.id: ho.aggregate_density for ho in health_objects.values()}
+#
+#     if len(densities.items()) == 0:
+#         return
+#
+#     # Determine the range of densities for normalization
+#     min_density = min(densities.values())
+#     max_density = max(densities.values())
+#
+#     # Get the colormap and normalize the densities
+#     cmap = plt.get_cmap("viridis")
+#     norm = plt.Normalize(min_density, max_density)
+#
+#     # Iterate through each HealthObject and update its render material
+#     for obj_id, density in densities.items():
+#         rgba_color = cmap(norm(density))
+#
+#         # Convert RGBA to Hex
+#         hex_color = "#{:02x}{:02x}{:02x}".format(
+#             int(rgba_color[0] * 255), int(rgba_color[1] * 255), int(rgba_color[2] * 255)
+#         )
+#
+#         # Convert hex color to ARBG integer format
+#         arbg_color = int(hex_color[1:], 16) - (1 << 32)
+#
+#         # Attach color information for visualization
+#         automate_context.attach_info_to_objects(
+#             category="Density Visualization",
+#             metadata={"density": density},
+#             message="density visualization",
+#             object_ids=obj_id,
+#             visual_overrides={"color": hex_color},
+#         )
+#
+#         # Update the render material of the HealthObject
+#         health_objects[obj_id].render_material = RenderMaterial(diffuse=arbg_color)
 def colorise_densities(
         automate_context: AutomationContext, health_objects: Dict[str, HealthObject]
 ) -> None:
@@ -187,7 +239,7 @@ def colorise_densities(
     # Extracting densities for each HealthObject
     densities = {ho.id: ho.aggregate_density for ho in health_objects.values()}
 
-    if len(densities.items()) == 0:
+    if not densities:
         return
 
     # Determine the range of densities for normalization
@@ -198,8 +250,11 @@ def colorise_densities(
     cmap = plt.get_cmap("viridis")
     norm = plt.Normalize(min_density, max_density)
 
-    # Iterate through each HealthObject and update its render material
-    for obj_id, density in densities.items():
+    gradient_values = {}
+    all_object_ids = []
+    all_colors = {}
+
+    for object_id, density in densities.items():
         rgba_color = cmap(norm(density))
 
         # Convert RGBA to Hex
@@ -207,20 +262,26 @@ def colorise_densities(
             int(rgba_color[0] * 255), int(rgba_color[1] * 255), int(rgba_color[2] * 255)
         )
 
-        # Convert hex color to ARBG integer format
+        gradient_values[object_id] = {
+            "gradientValue": density
+        }
+        all_object_ids.append(object_id)
+        all_colors[object_id] = hex_color
+
+        # Convert hex color to ARBG integer format and register a render material
         arbg_color = int(hex_color[1:], 16) - (1 << 32)
+        health_objects[object_id].render_material = RenderMaterial(diffuse=arbg_color)
 
-        # Attach color information for visualization
-        automate_context.attach_info_to_objects(
-            category="Density Visualization",
-            metadata={"density": density},
-            message="density visualization",
-            object_ids=obj_id,
-            visual_overrides={"color": hex_color},
-        )
-
-        # Update the render material of the HealthObject
-        health_objects[obj_id].render_material = RenderMaterial(diffuse=arbg_color)
+    # Attach color information for visualization for all objects in a single call
+    automate_context.attach_info_to_objects(
+        category="Density Visualization",
+        metadata={
+            "gradient": True,
+            "gradientValues": gradient_values
+        },
+        message="Density visualization",
+        object_ids=all_object_ids,
+    )
 
 
 def attach_visual_markers(
