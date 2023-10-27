@@ -140,6 +140,7 @@ class HealthObject:
                 self.bounding_volumes[
                     dv.id
                 ] = 0.0  # TODO: Handle other types of display values
+                self.areas[dv.id] = 0.0
 
     def compute_byte_size_from_display_values(self, display_values: List[T]) -> None:
         """Compute the byte size of a list of display values.
