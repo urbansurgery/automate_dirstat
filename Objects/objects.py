@@ -268,7 +268,11 @@ def colorise_densities(
 
         # Convert hex color to ARBG integer format and register a render material
         arbg_color = int(hex_color[1:], 16) - (1 << 32)
-        health_objects[object_id].render_material = RenderMaterial(diffuse=arbg_color)
+        health_objects[object_id].render_material = RenderMaterial(
+            name=f"Density {HealthObject.aggregate_density}",
+            diffuse=arbg_color,
+            opacity=1,
+        )
 
     # Attach color information for visualization for all objects in a single call
     automate_context.attach_info_to_objects(
