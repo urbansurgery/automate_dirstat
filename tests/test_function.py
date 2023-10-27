@@ -5,7 +5,12 @@ import string
 
 import pytest
 from gql import gql
-from speckle_automate import AutomationRunData, AutomationStatus, run_function, AutomationContext
+from speckle_automate import (
+    AutomationRunData,
+    AutomationStatus,
+    run_function,
+    AutomationContext,
+)
 from specklepy.api import operations
 from specklepy.api.client import SpeckleClient
 from specklepy.objects.base import Base
@@ -22,12 +27,12 @@ def crypto_random_string(length: int) -> str:
 
 
 def register_new_automation(
-        project_id: str,
-        model_id: str,
-        speckle_client: SpeckleClient,
-        automation_id: str,
-        automation_name: str,
-        automation_revision_id: str,
+    project_id: str,
+    model_id: str,
+    speckle_client: SpeckleClient,
+    automation_id: str,
+    automation_name: str,
+    automation_revision_id: str,
 ):
     """Register a new automation in the speckle server."""
     query = gql(
@@ -94,7 +99,7 @@ def test_object() -> Base:
 
 @pytest.fixture()
 def automation_run_data(
-        test_object: Base, test_client: SpeckleClient, speckle_server_url: str
+    test_object: Base, test_client: SpeckleClient, speckle_server_url: str
 ) -> AutomationRunData:
     """Set up an automation context for testing."""
     project_id = test_client.stream.create("Automate function e2e test")
@@ -135,11 +140,13 @@ def automation_run_data(
         automation_run_id=automation_run_id,
         function_id=function_id,
         function_revision=function_revision,
-        function_name=""
+        function_name="",
     )
 
 
-def test_function_run(automation_run_data: AutomationRunData, speckle_token: str, sample_bases):
+def test_function_run(
+    automation_run_data: AutomationRunData, speckle_token: str, sample_bases
+):
     """Run an integration test for the automate function."""
 
     context = AutomationContext.initialize(automation_run_data, speckle_token)
