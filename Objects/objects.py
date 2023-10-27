@@ -309,28 +309,6 @@ def attach_visual_markers(
         health_objects: Dictionary of health objects.
         density_level: Threshold for high density.
     """
-    # for ho in health_objects.values():
-    #     if any(value > density_level for value in ho.densities.values()):
-    #         count_exceeding = sum(
-    #             1 for value in ho.densities.values() if value > density_level
-    #         )
-    #         automate_context.attach_error_to_objects(
-    #             category="Density Check",
-    #             object_ids=ho.id,
-    #             message=(
-    #                 f"{count_exceeding} mesh{'es' if count_exceeding != 1 else ''} "
-    #                 f"of this object {'have' if count_exceeding != 1 else 'has'} a density, "
-    #                 f"that exceeds the threshold of {density_level}."
-    #             ),
-    #             visual_overrides={"color": "#ff0000"},
-    #         )
-    #     else:
-    #         automate_context.attach_info_to_objects(
-    #             category="Density Check",
-    #             object_ids=ho.id,
-    #             message=f"This object has an acceptable density of {ho.aggregate_density}.",
-    #             visual_overrides={"color": "#00ff00"},
-    #         )
     failing_ids = []
     non_failing_ids = []
 
@@ -430,7 +408,6 @@ def density_summary(
 def transport_recolorized_commit(
         automate_context: AutomationContext,
         health_objects: Dict[str, HealthObject],
-        commit_details: Dict[str, str],
         root_object: Base,
 ) -> None:
     # traverse the speckle commit object and find the display meshes that have entries in the health objects map
@@ -492,24 +469,24 @@ def transport_recolorized_commit(
 
 
 def get_data_traversal() -> GraphTraversal:
-    """This function is responsible for navigating through the Speckle data
+    """This function is responsible for navigating through the Speckle data  # noqa: D205
     hierarchy and providing contexts to be checked and acted upon.
 
     Returns: traversal rule function
     """
-    # display_value_property_aliases = {"displayValue", "@displayValue"}
-    # elements_property_aliases = {"elements", "@elements"}
+    display_value_property_aliases = {"displayValue", "@displayValue"}
+    elements_property_aliases = {"elements", "@elements"}
 
-    # display_value_rule = TraversalRule(
-    #     [
-    #         lambda o: any(
-    #             getattr(o, alias, None) for alias in display_value_property_aliases
-    #         ),
-    #         lambda o: "Geometry" in o.speckle_type,
-    #     ],
-    #     lambda o: elements_property_aliases,
-    # )
+    display_value_rule = TraversalRule(
+        [
+            lambda o: any(
+                getattr(o, alias, None) for alias in display_value_property_aliases
+            ),
+            lambda o: "Geometry" in o.speckle_type,
+        ],
+        lambda o: elements_property_aliases,
+    )
 
     default_rule = TraversalRule([lambda _: True], lambda o: o.get_member_names())
 
-    return GraphTraversal([default_rule])
+    return GraphTraversal([display_value_rule, default_rule])
