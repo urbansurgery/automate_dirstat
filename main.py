@@ -10,6 +10,7 @@ from speckle_automate import (
     execute_automate_function,
 )
 
+import Objects.objects
 from Objects.objects import (
     attach_visual_markers,
     colorise_densities,
@@ -18,6 +19,7 @@ from Objects.objects import (
 )
 from Utilities.reporting import Report
 from Utilities.utilities import Utilities
+
 
 ## new render materials for objects passing/failing
 ## swap those into the original commit object
@@ -114,6 +116,11 @@ def automate_function(
 
     file_name = Report.write_pdf_to_temp(report)
     automate_context.store_file_result(file_name)
+
+    # colorise the objects that pass/fail and send to a new model version
+    Objects.objects.transport_recolorized_commit(
+        automate_context, health_objects, commit_details, version_root_object
+    )
 
     if summary_data["values"]["result"] == "Fail":
         automate_context.mark_run_failed(
