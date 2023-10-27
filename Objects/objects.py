@@ -4,9 +4,6 @@ from typing import Dict, Iterable, List, Optional, TypeVar, Union
 
 from matplotlib import pyplot as plt
 from speckle_automate import AutomationContext
-from specklepy.api.client import SpeckleClient
-from specklepy.core.api.models import Branch
-from specklepy.logging.exceptions import GraphQLException
 from specklepy.objects.base import Base
 from specklepy.objects.geometry import Mesh
 from specklepy.objects.graph_traversal.traversal import GraphTraversal, TraversalRule
@@ -104,7 +101,7 @@ class HealthObject:
             self.compute_byte_size_from_display_values(display_value)
 
     def compute_bounding_volume_from_display_values(
-        self, display_value: List[T]
+            self, display_value: List[T]
     ) -> None:
         """Compute volume from a mesh representation.
 
@@ -128,13 +125,13 @@ class HealthObject:
                 z_interval = self.interval_from_coordinates_by_offset(dv.vertices, 2)
 
                 self.bounding_volumes[dv.id] = (
-                    x_interval.length() * y_interval.length() * z_interval.length()
+                        x_interval.length() * y_interval.length() * z_interval.length()
                 )
                 self.bounding_volumes[dv.id] /= 1000000000  # Convert to m^3
 
                 self.areas[dv.id] = (
-                    x_interval.length() * y_interval.length()
-                ) / 1000000
+                                            x_interval.length() * y_interval.length()
+                                    ) / 1000000
 
                 if z_interval.length() == 0:
                     self.dimension = "2D"
@@ -158,7 +155,7 @@ class HealthObject:
 
     @staticmethod
     def interval_from_coordinates_by_offset(
-        vertices: List[float], offset: int = 0
+            vertices: List[float], offset: int = 0
     ) -> Interval:
         """Compute interval from coordinates by offset.
 
@@ -227,7 +224,7 @@ class HealthObject:
 #         # Update the render material of the HealthObject
 #         health_objects[obj_id].render_material = RenderMaterial(diffuse=arbg_color)
 def colorise_densities(
-    automate_context: AutomationContext, health_objects: Dict[str, HealthObject]
+        automate_context: AutomationContext, health_objects: Dict[str, HealthObject]
 ) -> None:
     """Create a color gradient based on density values for visualization.
 
@@ -287,9 +284,9 @@ def colorise_densities(
 
 
 def attach_visual_markers(
-    automate_context: AutomationContext,
-    health_objects: Dict[str, HealthObject],
-    density_level: float,
+        automate_context: AutomationContext,
+        health_objects: Dict[str, HealthObject],
+        density_level: float,
 ) -> None:
     """Attach visual markers and notifications based on density.
 
@@ -363,7 +360,7 @@ def create_health_objects(bases: List[Base]) -> Dict[str, HealthObject]:
 
 
 def density_summary(
-    health_objects: Dict[str, "HealthObject"]
+        health_objects: Dict[str, "HealthObject"]
 ) -> tuple[List[List[Union[str, float, int]]], List[float], List[int]]:
     """Generate a density summary for the provided health objects.
 
@@ -417,10 +414,10 @@ def density_summary(
 
 
 def transport_recolorized_commit(
-    automate_context: AutomationContext,
-    health_objects: Dict[str, HealthObject],
-    commit_details: Dict[str, str],
-    root_object: Base,
+        automate_context: AutomationContext,
+        health_objects: Dict[str, HealthObject],
+        commit_details: Dict[str, str],
+        root_object: Base,
 ) -> None:
     # traverse the speckle commit object and find the display meshes that have entries in the health objects map
     # return the commit id of the new commit
@@ -447,10 +444,10 @@ def transport_recolorized_commit(
 
         # check current object is type Base and has a displayValue property and has an id that exists in the health objects map
         if (
-            isinstance(current_object, Base)
-            and hasattr(current_object, "displayValue")
-            and hasattr(current_object, "id")
-            and current_object.id in health_objects
+                isinstance(current_object, Base)
+                and hasattr(current_object, "displayValue")
+                and hasattr(current_object, "id")
+                and current_object.id in health_objects.keys()
         ):
             display_value = Utilities.try_get_display_value(current_object)
 
@@ -481,7 +478,6 @@ def transport_recolorized_commit(
     return
 
 
-
 def get_data_traversal() -> GraphTraversal:
     """This function is responsible for navigating through the Speckle data
     hierarchy and providing contexts to be checked and acted upon.
@@ -504,4 +500,3 @@ def get_data_traversal() -> GraphTraversal:
     default_rule = TraversalRule([lambda _: True], lambda o: o.get_member_names())
 
     return GraphTraversal([default_rule])
-

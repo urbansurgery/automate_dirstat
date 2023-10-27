@@ -319,3 +319,5 @@ pyrightconfig.json
 .idea/codeStyles/codeStyleConfig.xml
 .idea/vcs.xml
 .idea/inspectionProfiles/profiles_settings.xml
+/.idea/ruff.xml
+/.idea/git_toolbox_prj.xml
