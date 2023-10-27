@@ -4,6 +4,9 @@ from typing import Dict, Iterable, List, Optional, TypeVar, Union
 
 from matplotlib import pyplot as plt
 from speckle_automate import AutomationContext
+from specklepy.api.client import SpeckleClient
+from specklepy.core.api.models import Branch
+from specklepy.logging.exceptions import GraphQLException
 from specklepy.objects.base import Base
 from specklepy.objects.geometry import Mesh
 from specklepy.objects.graph_traversal.traversal import GraphTraversal, TraversalRule
@@ -478,6 +481,7 @@ def transport_recolorized_commit(
     return
 
 
+
 def get_data_traversal() -> GraphTraversal:
     """This function is responsible for navigating through the Speckle data
     hierarchy and providing contexts to be checked and acted upon.
@@ -500,3 +504,4 @@ def get_data_traversal() -> GraphTraversal:
     default_rule = TraversalRule([lambda _: True], lambda o: o.get_member_names())
 
     return GraphTraversal([default_rule])
+
