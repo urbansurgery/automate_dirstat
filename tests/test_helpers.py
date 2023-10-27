@@ -38,7 +38,7 @@ def speckle_server_url(request) -> str:
 def test_filter_displayable_bases(mock_base):
     displayable_bases = Utilities.filter_displayable_bases(mock_base)
     assert (
-            len(displayable_bases) == 2
+        len(displayable_bases) == 2
     )  # Only child_1 and child_2 should be considered displayable
 
 
@@ -47,7 +47,7 @@ def test_convert_from_base_with_nested_elements(mock_base):
     health_obj.convert_from_base(mock_base)
     assert health_obj.id == "12345"
     assert (
-            health_obj.speckle_type == "Base"
+        health_obj.speckle_type == "Base"
     )  # Assuming no speckle_type was set in the mock_base
 
 
