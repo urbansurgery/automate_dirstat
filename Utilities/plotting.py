@@ -1,8 +1,9 @@
-import matplotlib.pyplot as plt
-import pandas as pd
-import seaborn as sns
-import numpy as np
 from typing import List
+
+import matplotlib.pyplot as plt
+import numpy as np
+import seaborn as sns
+from matplotlib.ticker import ScalarFormatter
 
 sns.set_style("whitegrid")
 sns.set_context("talk")
@@ -45,6 +46,11 @@ class Plotting:
         plt.ylabel("Count")
         plt.title("Density Distribution")
         plt.legend()
+
+        # Format the x-axis to avoid scientific notation
+        ax = plt.gca()  # Get current axis
+        ax.xaxis.set_major_formatter(ScalarFormatter(useMathText=False))
+        ax.ticklabel_format(style="plain", axis="x")
         # plt.show()
 
     @staticmethod
@@ -86,6 +92,11 @@ class Plotting:
         plt.xlabel("Area")
         plt.ylabel("Density (~vertices/m2)")
         plt.legend(title="Density", loc="upper right")
+
+        # Format the y-axis to avoid scientific notation
+        ax = plt.gca()  # Get current axis
+        ax.yaxis.set_major_formatter(ScalarFormatter(useMathText=False))
+        ax.ticklabel_format(style="plain", axis="x")
         # plt.show()
 
     @staticmethod
