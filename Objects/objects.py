@@ -1,5 +1,6 @@
 import statistics
 from dataclasses import dataclass, field
+from typing import Dict, Iterable, List, Optional, TypeVar, Union
 
 from matplotlib import pyplot as plt
 from speckle_automate import AutomationContext
@@ -8,8 +9,7 @@ from specklepy.core.api.models import Branch
 from specklepy.logging.exceptions import GraphQLException
 from specklepy.objects.base import Base
 from specklepy.objects.geometry import Mesh
-from typing import Optional, TypeVar, List, Dict, Union
-
+from specklepy.objects.graph_traversal.traversal import GraphTraversal, TraversalRule
 from specklepy.objects.other import RenderMaterial
 from specklepy.objects.primitive import Interval
 
@@ -104,7 +104,7 @@ class HealthObject:
             self.compute_byte_size_from_display_values(display_value)
 
     def compute_bounding_volume_from_display_values(
-            self, display_value: List[T]
+        self, display_value: List[T]
     ) -> None:
         """Compute volume from a mesh representation.
 
@@ -128,13 +128,13 @@ class HealthObject:
                 z_interval = self.interval_from_coordinates_by_offset(dv.vertices, 2)
 
                 self.bounding_volumes[dv.id] = (
-                        x_interval.length() * y_interval.length() * z_interval.length()
+                    x_interval.length() * y_interval.length() * z_interval.length()
                 )
                 self.bounding_volumes[dv.id] /= 1000000000  # Convert to m^3
 
                 self.areas[dv.id] = (
-                                            x_interval.length() * y_interval.length()
-                                    ) / 1000000
+                    x_interval.length() * y_interval.length()
+                ) / 1000000
 
                 if z_interval.length() == 0:
                     self.dimension = "2D"
@@ -154,12 +154,11 @@ class HealthObject:
         Returns:
             int: The computed byte size.
         """
-
         self.sizes.update({dv.id: Utilities.get_byte_size(dv) for dv in display_values})
 
     @staticmethod
     def interval_from_coordinates_by_offset(
-            vertices: List[float], offset: int = 0
+        vertices: List[float], offset: int = 0
     ) -> Interval:
         """Compute interval from coordinates by offset.
 
@@ -228,10 +227,9 @@ class HealthObject:
 #         # Update the render material of the HealthObject
 #         health_objects[obj_id].render_material = RenderMaterial(diffuse=arbg_color)
 def colorise_densities(
-        automate_context: AutomationContext, health_objects: Dict[str, HealthObject]
+    automate_context: AutomationContext, health_objects: Dict[str, HealthObject]
 ) -> None:
-    """
-    Create a color gradient based on density values for visualization.
+    """Create a color gradient based on density values for visualization.
 
     Args:
         automate_context (AutomationContext): Context for the automate function.
@@ -241,7 +239,6 @@ def colorise_densities(
     For each HealthObject, this function calculates a color based on its
     density. This color then is used to update the object's render material.
     """
-
     # Extracting densities for each HealthObject
     densities = {ho.id: ho.aggregate_density for ho in health_objects.values()}
 
@@ -286,12 +283,11 @@ def colorise_densities(
 
 
 def attach_visual_markers(
-        automate_context: AutomationContext,
-        health_objects: Dict[str, HealthObject],
-        density_level: float,
+    automate_context: AutomationContext,
+    health_objects: Dict[str, HealthObject],
+    density_level: float,
 ) -> None:
-    """
-    Attach visual markers and notifications based on density.
+    """Attach visual markers and notifications based on density.
 
     Args:
         automate_context: Context for the automate function.
@@ -347,8 +343,7 @@ def attach_visual_markers(
 
 
 def create_health_objects(bases: List[Base]) -> Dict[str, HealthObject]:
-    """
-    Converts bases into health objects for further analysis.
+    """Converts bases into health objects for further analysis.
 
     Args:
         bases: List of base objects.
@@ -364,10 +359,9 @@ def create_health_objects(bases: List[Base]) -> Dict[str, HealthObject]:
 
 
 def density_summary(
-        health_objects: Dict[str, "HealthObject"]
+    health_objects: Dict[str, "HealthObject"]
 ) -> tuple[List[List[Union[str, float, int]]], List[float], List[int]]:
-    """
-    Generate a density summary for the provided health objects.
+    """Generate a density summary for the provided health objects.
 
     This method filters health objects based on their areas, computes
     various statistical metrics on their densities, and prepares a summary
@@ -418,35 +412,86 @@ def density_summary(
     return data, all_densities, all_areas
 
 
-def transport_recolorized_commit(automate_context: AutomationContext, health_objects: Dict[str, HealthObject],
-                                 commit_details: Dict[str, str], root_object: Base) -> str:
+def transport_recolorized_commit(
+    automate_context: AutomationContext,
+    health_objects: Dict[str, HealthObject],
+    commit_details: Dict[str, str],
+    root_object: Base,
+) -> None:
     # traverse the speckle commit object and find the display meshes that have entries in the health objects map
     # return the commit id of the new commit
     # create a new commit on a specific branch - we'll use "dirstat" for now
 
+    if automate_context.automation_run_data.branch_name == "density":
+        # commits on the density branch cannot be recolored
+        print("------------------------------------------------")
+        print("| CANNOT RECOLOR COMMITS ON THE DENSITY BRANCH |")
+        print("------------------------------------------------")
+        return
+
     # Traverse the root object to find display meshes
-    for obj in root_object.traverse():
-        if isinstance(obj, Mesh):  # Assuming Mesh is the type of displayable objects
-            if obj.id in health_objects:
-                # Modify the mesh based on its health data
-                # For example, change its color or add a visual marker
-                pass  # Implement the modification logic here
+    speckle_data = get_data_traversal()
+    traversal_contexts_collection = speckle_data.traverse(root_object)
+
+    # Iterate over each context in the traversal contexts collection.
+    # Each context represents an object (or a nested part of an object) within
+    # the data structure that was traversed.
+    # The goal of this loop is to identify mesh objects represented as HealthObjects and apply the
+    # render material already calculated.
+    for context in traversal_contexts_collection:
+        current_object = context.current
+
+        # check current object is type Base and has a displayValue property and has an id that exists in the health objects map
+        if (
+            isinstance(current_object, Base)
+            and hasattr(current_object, "displayValue")
+            and hasattr(current_object, "id")
+            and current_object.id in health_objects
+        ):
+            display_value = Utilities.try_get_display_value(current_object)
+
+            if display_value:
+                # if display_value is an iterable
+                if isinstance(display_value, Iterable):
+                    for display_value_object in display_value:
+                        # Apply the render material to the object
+                        display_value_object.render_material = health_objects[
+                            current_object.id
+                        ].render_material
+
+                else:
+                    # Apply the render material to the object
+                    display_value.render_material = health_objects[
+                        current_object.id
+                    ].render_material
 
     # Create a new commit with the modified root object
-    model = try_get_model_or_create(client=automate_context.speckle_client,
-                                    project_id=automate_context.automation_run_data.project_id, model_name="dirstat")
+    model = try_get_model_or_create(
+        client=automate_context.speckle_client,
+        project_id=automate_context.automation_run_data.project_id,
+        model_name="dirstat",
+    )
 
     if not model:
         raise Exception("Failed to create a new model (branch) on the server.")
 
     model_id = model.id
 
-    new_version_id = automate_context.create_new_version_in_project(root_object=root_object, model_id=model_id)
+    new_version_id = automate_context.create_new_version_in_project(
+        root_object=root_object,
+        model_name="density",
+        version_message="Colored Densities",
+    )
+
+    if not new_version_id:
+        raise Exception("Failed to create a new commit on the server.")
 
     return new_version_id
 
 
-def try_get_model_or_create(client: SpeckleClient, project_id: str, model_name: str) -> Union[Branch, None]:
+def try_get_model_or_create(
+    client: SpeckleClient, project_id: str, model_name: str
+) -> Union[Branch, None]:
     try:
         # Attempt to retrieve the model (branch) by its name
         model = client.branch.get(stream_id=project_id, name=model_name)
@@ -461,3 +506,30 @@ def try_get_model_or_create(client: SpeckleClient, project_id: str, model_name: 
     except GraphQLException:
         # Handle exception raised while fetching or creating the model
         return None
+
+
+def get_data_traversal() -> GraphTraversal:
+    """This function is responsible for navigating through the Speckle data
+    hierarchy and providing contexts to be checked and acted upon.
+
+    Returns: traversal rule function
+    """
+    display_value_property_aliases = {"displayValue", "@displayValue"}
+    elements_property_aliases = {"elements", "@elements"}
+
+    display_value_rule = TraversalRule(
+        [
+            lambda o: any(
+                getattr(o, alias, None) for alias in display_value_property_aliases
+            ),
+            lambda o: "Geometry" in o.speckle_type,
+        ],
+        lambda o: elements_property_aliases,
+    )
+
+    default_rule = TraversalRule(
+        [lambda _: True],
+        lambda o: o.get_member_names(),  # TODO: avoid deprecated members
+    )
+
+    return GraphTraversal([display_value_rule, default_rule])
