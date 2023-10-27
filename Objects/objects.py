@@ -1,6 +1,6 @@
 import statistics
 from dataclasses import dataclass, field
-from typing import Dict, Iterable, List, Optional, TypeVar, Union
+from typing import Any, Dict, Iterable, List, Optional, TypeVar, Union
 
 from matplotlib import pyplot as plt
 from speckle_automate import AutomationContext
@@ -237,6 +237,20 @@ def colorise_densities(
     density. This color then is used to update the object's render material.
     """
     # Extracting densities for each HealthObject
+    gradient_values, all_object_ids, all_colors = colorize(health_objects)
+
+    # Attach color information for visualization for all objects in a single call
+    automate_context.attach_info_to_objects(
+        category="Density Visualization",
+        metadata={"gradient": True, "gradientValues": gradient_values},
+        message="Density visualization",
+        object_ids=all_object_ids,
+    )
+
+
+def colorize(
+        health_objects
+) -> tuple[dict[Any, dict[str, Any]], list[Any], dict[Any, str]]:
     densities = {ho.id: ho.aggregate_density for ho in health_objects.values()}
 
     if not densities:
@@ -268,19 +282,19 @@ def colorise_densities(
 
         # Convert hex color to ARBG integer format and register a render material
         arbg_color = int(hex_color[1:], 16) - (1 << 32)
-        health_objects[object_id].render_material = RenderMaterial(
-            name=f"Density {HealthObject.aggregate_density}",
-            diffuse=arbg_color,
-            opacity=1,
-        )
 
-    # Attach color information for visualization for all objects in a single call
-    automate_context.attach_info_to_objects(
-        category="Density Visualization",
-        metadata={"gradient": True, "gradientValues": gradient_values},
-        message="Density visualization",
-        object_ids=all_object_ids,
-    )
+        render_material = RenderMaterial()
+
+        render_material.name = "Density"
+        render_material.diffuse = arbg_color
+        render_material.opacity = 1
+        render_material.metalness = 0
+        render_material.roughness = 1
+        render_material.emissive = -16777216  # black arbg
+
+        health_objects[object_id].render_material = render_material
+
+    return gradient_values, all_object_ids, all_colors
 
 
 def attach_visual_markers(
@@ -456,13 +470,12 @@ def transport_recolorized_commit(
                 if isinstance(display_value, Iterable):
                     for display_value_object in display_value:
                         # Apply the render material to the object
-                        display_value_object.render_material = health_objects[
+                        display_value_object.renderMaterial = health_objects[
                             current_object.id
                         ].render_material
-
                 else:
                     # Apply the render material to the object
-                    display_value.render_material = health_objects[
+                    display_value.renderMaterial = health_objects[
                         current_object.id
                     ].render_material
 
