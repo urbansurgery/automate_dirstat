@@ -26,7 +26,7 @@ def speckle_token(request) -> str:
 
 @pytest.fixture()
 def speckle_server_url(request) -> str:
-    """Provide a speckle server URL for the test suite.
+    """Provide a speckle server URL for the test suite.  # noqa: D205
     Defaults to localhost if not specified.
     """
     return request.config.SPECKLE_SERVER_URL
