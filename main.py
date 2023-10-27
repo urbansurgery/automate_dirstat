@@ -20,7 +20,6 @@ from Objects.objects import (
 from Utilities.reporting import Report
 from Utilities.utilities import Utilities
 
-
 ## new render materials for objects passing/failing
 ## swap those into the original commit object
 ## send that back to the server
@@ -54,7 +53,7 @@ class FunctionInputs(AutomateBase):
 
 
 def automate_function(
-    automate_context: AutomationContext, function_inputs: FunctionInputs
+        automate_context: AutomationContext, function_inputs: FunctionInputs
 ) -> None:
     """Analyzes Speckle data and provides visual markers and notifications.
 
@@ -119,7 +118,7 @@ def automate_function(
 
     # colorise the objects that pass/fail and send to a new model version
     Objects.objects.transport_recolorized_commit(
-        automate_context, health_objects, commit_details, version_root_object
+        automate_context, health_objects, version_root_object
     )
 
     if summary_data["values"]["result"] == "Fail":
