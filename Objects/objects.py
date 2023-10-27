@@ -271,7 +271,11 @@ def colorise_densities(
 
         # Convert hex color to ARBG integer format and register a render material
         arbg_color = int(hex_color[1:], 16) - (1 << 32)
-        health_objects[object_id].render_material = RenderMaterial(diffuse=arbg_color)
+        health_objects[object_id].render_material = RenderMaterial(
+            name=f"Density {HealthObject.aggregate_density}",
+            diffuse=arbg_color,
+            opacity=1,
+        )
 
     # Attach color information for visualization for all objects in a single call
     automate_context.attach_info_to_objects(
@@ -465,18 +469,6 @@ def transport_recolorized_commit(
                         current_object.id
                     ].render_material
 
-    # Create a new commit with the modified root object
-    model = try_get_model_or_create(
-        client=automate_context.speckle_client,
-        project_id=automate_context.automation_run_data.project_id,
-        model_name="dirstat",
-    )
-
-    if not model:
-        raise Exception("Failed to create a new model (branch) on the server.")
-
-    model_id = model.id
-
     new_version_id = automate_context.create_new_version_in_project(
         root_object=root_object,
         model_name="density",
@@ -486,26 +478,8 @@ def transport_recolorized_commit(
     if not new_version_id:
         raise Exception("Failed to create a new commit on the server.")
 
-    return new_version_id
+    return
 
-
-def try_get_model_or_create(
-    client: SpeckleClient, project_id: str, model_name: str
-) -> Union[Branch, None]:
-    try:
-        # Attempt to retrieve the model (branch) by its name
-        model = client.branch.get(stream_id=project_id, name=model_name)
-
-        # If the model doesn't exist, create it
-        if not model:
-            client.branch.create(stream_id=project_id, name=model_name)
-            model = client.branch.get(stream_id=project_id, name=model_name)
-
-        return model
-
-    except GraphQLException:
-        # Handle exception raised while fetching or creating the model
-        return None
 
 
 def get_data_traversal() -> GraphTraversal:
@@ -514,22 +488,20 @@ def get_data_traversal() -> GraphTraversal:
 
     Returns: traversal rule function
     """
-    display_value_property_aliases = {"displayValue", "@displayValue"}
-    elements_property_aliases = {"elements", "@elements"}
+    # display_value_property_aliases = {"displayValue", "@displayValue"}
+    # elements_property_aliases = {"elements", "@elements"}
 
-    display_value_rule = TraversalRule(
-        [
-            lambda o: any(
-                getattr(o, alias, None) for alias in display_value_property_aliases
-            ),
-            lambda o: "Geometry" in o.speckle_type,
-        ],
-        lambda o: elements_property_aliases,
-    )
+    # display_value_rule = TraversalRule(
+    #     [
+    #         lambda o: any(
+    #             getattr(o, alias, None) for alias in display_value_property_aliases
+    #         ),
+    #         lambda o: "Geometry" in o.speckle_type,
+    #     ],
+    #     lambda o: elements_property_aliases,
+    # )
 
-    default_rule = TraversalRule(
-        [lambda _: True],
-        lambda o: o.get_member_names(),  # TODO: avoid deprecated members
-    )
+    default_rule = TraversalRule([lambda _: True], lambda o: o.get_member_names())
 
-    return GraphTraversal([display_value_rule, default_rule])
+    return GraphTraversal([default_rule])
+
