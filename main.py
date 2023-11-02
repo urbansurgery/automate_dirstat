@@ -53,7 +53,7 @@ class FunctionInputs(AutomateBase):
 
 
 def automate_function(
-        automate_context: AutomationContext, function_inputs: FunctionInputs
+    automate_context: AutomationContext, function_inputs: FunctionInputs
 ) -> None:
     """Analyzes Speckle data and provides visual markers and notifications.
 

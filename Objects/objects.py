@@ -1,3 +1,4 @@
+import json
 import statistics
 from dataclasses import dataclass, field
 from typing import Any, Dict, Iterable, List, Optional, TypeVar, Union
@@ -450,11 +451,26 @@ def transport_recolorized_commit(
                         display_value_object.renderMaterial = health_objects[
                             current_object.id
                         ].render_material
+
+                    # concatenate the names of all the render materials
+                    render_material_names = [
+                        display_value_object.renderMaterial.name
+                        for display_value_object in display_value
+                    ]
+
                 else:
                     # Apply the render material to the object
                     display_value.renderMaterial = health_objects[
                         current_object.id
                     ].render_material
+
+                    # concatenate the names of all the render materials
+                    render_material_names = [display_value.renderMaterial.name]
+
+                current_object["density_rendered"] = True
+                current_object["densities"] = health_objects[
+                    current_object.id
+                ].densities
 
     new_version_id = automate_context.create_new_version_in_project(
         root_object=root_object,
@@ -466,6 +482,12 @@ def transport_recolorized_commit(
         raise Exception("Failed to create a new commit on the server.")
 
     return
+
+
+def custom_encoder(obj):
+    if isinstance(obj, Mesh):
+        return None
+    raise TypeError(f"Object of type {obj.__class__.__name__} is not JSON serializable")
 
 
 def get_data_traversal() -> GraphTraversal:

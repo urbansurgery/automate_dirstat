@@ -148,8 +148,8 @@ def fake_automation_run_data(request, test_client: SpeckleClient) -> AutomationR
     SERVER_URL = request.config.SPECKLE_SERVER_URL
     TOKEN = request.config.SPECKLE_TOKEN
 
-    project_id = "d96e3f2579"
-    model_id = "08e5d7037a"
+    project_id = "9c6bfd2177"
+    model_id = "6193bdb540"
 
     function_name = "Automate Density Check"
 
@@ -170,7 +170,7 @@ def fake_automation_run_data(request, test_client: SpeckleClient) -> AutomationR
         project_id=project_id,
         model_id=model_id,
         branch_name="main",
-        version_id="3e4e274c56",
+        version_id="107527ebd2",
         speckle_server_url=SERVER_URL,
         # These ids would be available with a valid registered Automation definition.
         automation_id=automation_id,

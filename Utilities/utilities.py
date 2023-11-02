@@ -1,8 +1,9 @@
-from typing import List, TypeVar, Iterable, Optional
+from typing import List, TypeVar, Iterable, Optional, Tuple
+
 from specklepy.objects.base import Base
 import sys
 
-from flatten import flatten_base
+from flatten import flatten_base, extract_base_and_transform
 
 T = TypeVar("T", bound=Base)
 
@@ -88,8 +89,12 @@ class Utilities:
         Returns:
             List of displayable bases with valid IDs.
         """
-        return [
-            b
-            for b in flatten_base(root_object)
-            if Utilities.is_displayable_object(b) and b.id
+        displayable_objects = [
+            base  # 'base' is now the first element of the tuple 'b'
+            for base, instance_id, transform in list(
+                extract_base_and_transform(root_object)
+            )
+            if Utilities.is_displayable_object(base) and getattr(base, "id", None)
         ]
+
+        return displayable_objects
